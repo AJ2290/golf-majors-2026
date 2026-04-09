@@ -21,7 +21,10 @@ export async function ensureTournaments() {
           deadline: new Date(major.deadline),
         },
       });
-    } else if (major.espnId && existing.espnId !== major.espnId) {
+    } else if (
+      (major.espnId && existing.espnId !== major.espnId) ||
+      existing.deadline.getTime() !== new Date(major.deadline).getTime()
+    ) {
       await prisma.tournament.update({
         where: { id: existing.id },
         data: { espnId: major.espnId, deadline: new Date(major.deadline) },
