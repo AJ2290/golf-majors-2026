@@ -15,7 +15,7 @@ const theme = DEFAULT_THEME;
 export function LoginForm({ onLogin }: { onLogin: (user: User) => void }) {
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">("register");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
