@@ -15,21 +15,30 @@ interface Tournament {
   lastSyncAt: string | null;
 }
 
+interface PickStatus {
+  name: string;
+  tournaments: { tournamentId: string; tournamentName: string; pickCount: number; complete: boolean }[];
+}
+
 export function Admin() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [golferCount, setGolferCount] = useState(0);
+  const [pickStatus, setPickStatus] = useState<PickStatus[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const loadData = useCallback(async () => {
-    const [tRes, gRes] = await Promise.all([
+    const [tRes, gRes, pRes] = await Promise.all([
       fetch("/api/tournaments"),
       fetch("/api/golfers"),
+      fetch("/api/admin/pick-status"),
     ]);
     const tData = await tRes.json();
     const gData = await gRes.json();
+    const pData = await pRes.json();
     setTournaments(tData.tournaments || []);
     setGolferCount(gData.golfers?.length || 0);
+    setPickStatus(pData.status || []);
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -93,6 +102,43 @@ export function Admin() {
         }}>
           {loading ? "Syncing..." : "Sync All Scores"}
         </button>
+      </div>
+
+      {/* Pick status */}
+      <div style={{ background: "#ffffff", border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: "0 0 12px" }}>Pick Status</h3>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left", padding: "6px 8px", color: t.muted, fontWeight: 600, borderBottom: `1px solid ${t.border}` }}>Player</th>
+                {tournaments.map((tour) => (
+                  <th key={tour.id} style={{ textAlign: "center", padding: "6px 8px", color: t.muted, fontWeight: 600, borderBottom: `1px solid ${t.border}`, whiteSpace: "nowrap" }}>
+                    {tour.name.replace("The ", "").replace(" Championship", "")}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pickStatus.map((player) => (
+                <tr key={player.name}>
+                  <td style={{ padding: "8px", fontWeight: 600, color: t.text, borderBottom: `1px solid ${t.border}` }}>{player.name}</td>
+                  {player.tournaments.map((pt) => (
+                    <td key={pt.tournamentId} style={{ textAlign: "center", padding: "8px", borderBottom: `1px solid ${t.border}` }}>
+                      {pt.complete ? (
+                        <span style={{ color: "#16a34a", fontWeight: 700 }}>✓</span>
+                      ) : pt.pickCount > 0 ? (
+                        <span style={{ color: "#f59e0b", fontWeight: 600 }}>{pt.pickCount}/4</span>
+                      ) : (
+                        <span style={{ color: t.dim }}>—</span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Per-tournament details */}
