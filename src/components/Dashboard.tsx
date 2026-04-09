@@ -242,10 +242,10 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
                 ← Back
               </button>
               <h1 style={{ fontSize: 18, fontWeight: 700, color: theme.accent, margin: 0 }}>
-                {activeTournament?.name}
+                {activeTournament?.name || "Admin"}
               </h1>
             </div>
-            <CountdownBadge deadline={activeTournament!.deadline} />
+            {activeTournament && <CountdownBadge deadline={activeTournament.deadline} />}
           </div>
           <div style={{ display: "flex", gap: 4 }}>
             {tabs.filter((t) => t.show).map((t) => (
