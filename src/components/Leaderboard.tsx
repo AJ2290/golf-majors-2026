@@ -126,12 +126,10 @@ function CompactLeaderboard() {
   );
 }
 
-// Masters leaderboard — Sky Sports style: light grey rows, green header, clean
-function MastersLeaderboard({ sorted, tournamentName, expanded, setExpanded }: {
+// Masters leaderboard — always expanded with picks
+function MastersLeaderboard({ sorted, tournamentName }: {
   sorted: LeaderboardEntry[];
   tournamentName: string;
-  expanded: string | null;
-  setExpanded: (id: string | null) => void;
 }) {
   return (
     <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #ddd" }}>
@@ -158,22 +156,17 @@ function MastersLeaderboard({ sorted, tournamentName, expanded, setExpanded }: {
         <span style={{ fontSize: 12, color: "#165f3b", fontWeight: 600 }}>£60 pot</span>
       </div>
 
-      {/* Rows */}
+      {/* Rows — always expanded */}
       {sorted.map((entry, i) => {
         const major = entry.majors[tournamentName];
-        const isExpanded = expanded === entry.id;
         return (
           <div key={entry.id}>
-            <button
-              onClick={() => setExpanded(isExpanded ? null : entry.id)}
-              style={{
-                width: "100%", padding: "12px 20px",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                background: i % 2 === 0 ? "#ffffff" : "#f7f7f7",
-                border: "none", cursor: "pointer",
-                borderBottom: "1px solid #e5e5e5",
-              }}
-            >
+            <div style={{
+              width: "100%", padding: "12px 20px",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              background: i % 2 === 0 ? "#ffffff" : "#f7f7f7",
+              borderBottom: "1px solid #e5e5e5",
+            }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ fontSize: 16, fontWeight: 700, width: 24, color: "#165f3b", textAlign: "center" }}>
                   {i + 1}
@@ -187,27 +180,25 @@ function MastersLeaderboard({ sorted, tournamentName, expanded, setExpanded }: {
                   {formatScore(major.score)}
                 </span>
               </div>
-            </button>
+            </div>
 
-            {isExpanded && (
-              <div style={{ background: "#fafafa", borderBottom: "1px solid #e5e5e5" }}>
-                {major.picks.map((p) => (
-                  <div key={p.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 20px 8px 58px", fontSize: 13, borderBottom: "1px solid #eee" }}>
-                    <span style={{ color: "#333", fontWeight: 600 }}>
-                      {p.name}
-                      {p.status !== "active" && (
-                        <span style={{ color: "#dc2626", marginLeft: 6, fontSize: 11, fontWeight: 700 }}>({p.status.toUpperCase()})</span>
-                      )}
-                    </span>
-                    <span style={{ fontWeight: 700, color: scoreColor(p.score) }}>{formatScore(p.score)}</span>
-                  </div>
-                ))}
-                <div style={{ padding: "8px 20px 10px 58px", borderTop: "1px solid #ddd", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 12, color: "#165f3b", fontWeight: 700 }}>Overall (all majors)</span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: scoreColor(entry.totalScore) }}>{formatScore(entry.totalScore)}</span>
+            <div style={{ background: "#fafafa", borderBottom: "1px solid #e5e5e5" }}>
+              {major.picks.map((p) => (
+                <div key={p.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 20px 8px 58px", fontSize: 13, borderBottom: "1px solid #eee" }}>
+                  <span style={{ color: "#333", fontWeight: 600 }}>
+                    {p.name}
+                    {p.status !== "active" && p.status !== "pending" && (
+                      <span style={{ color: "#dc2626", marginLeft: 6, fontSize: 11, fontWeight: 700 }}>({p.status.toUpperCase()})</span>
+                    )}
+                  </span>
+                  <span style={{ fontWeight: 700, color: scoreColor(p.score) }}>{formatScore(p.score)}</span>
                 </div>
+              ))}
+              <div style={{ padding: "8px 20px 10px 58px", borderTop: "1px solid #ddd", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: "#165f3b", fontWeight: 700 }}>Overall (all majors)</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: scoreColor(entry.totalScore) }}>{formatScore(entry.totalScore)}</span>
               </div>
-            )}
+            </div>
           </div>
         );
       })}
@@ -215,13 +206,11 @@ function MastersLeaderboard({ sorted, tournamentName, expanded, setExpanded }: {
   );
 }
 
-// Default leaderboard style (used for PGA, US Open, The Open)
-function DefaultLeaderboard({ sorted, tournamentName, theme, expanded, setExpanded }: {
+// Default leaderboard style (used for PGA, US Open, The Open) — always expanded
+function DefaultLeaderboard({ sorted, tournamentName, theme }: {
   sorted: LeaderboardEntry[];
   tournamentName: string;
   theme: TournamentTheme;
-  expanded: string | null;
-  setExpanded: (id: string | null) => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -237,19 +226,13 @@ function DefaultLeaderboard({ sorted, tournamentName, theme, expanded, setExpand
               overflow: "hidden",
             }}
           >
-            <button
-              onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
-              style={{
-                width: "100%",
-                padding: "14px 16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
+            <div style={{
+              width: "100%",
+              padding: "14px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span style={{ fontSize: 18, fontWeight: 800, width: 28, color: i === 0 ? theme.accent : theme.dim }}>
                   {i + 1}
@@ -259,27 +242,25 @@ function DefaultLeaderboard({ sorted, tournamentName, theme, expanded, setExpand
               <span style={{ fontSize: 18, fontWeight: 700, color: scoreColor(major.score) }}>
                 {formatScore(major.score)}
               </span>
-            </button>
+            </div>
 
-            {expanded === entry.id && (
-              <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${theme.border}` }}>
-                {major.picks.map((p) => (
-                  <div key={p.name} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 6px 40px", fontSize: 13 }}>
-                    <span style={{ color: theme.muted }}>
-                      {p.name}
-                      {p.status !== "active" && (
-                        <span style={{ color: "#f87171", marginLeft: 6, fontSize: 11 }}>({p.status.toUpperCase()})</span>
-                      )}
-                    </span>
-                    <span style={{ fontWeight: 600, color: scoreColor(p.score) }}>{formatScore(p.score)}</span>
-                  </div>
-                ))}
-                <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${theme.border}`, display: "flex", justifyContent: "space-between", paddingLeft: 40 }}>
-                  <span style={{ fontSize: 12, color: theme.dim, fontWeight: 600 }}>Overall (all majors)</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(entry.totalScore) }}>{formatScore(entry.totalScore)}</span>
+            <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${theme.border}` }}>
+              {major.picks.map((p) => (
+                <div key={p.name} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 6px 40px", fontSize: 13 }}>
+                  <span style={{ color: theme.muted }}>
+                    {p.name}
+                    {p.status !== "active" && p.status !== "pending" && (
+                      <span style={{ color: "#f87171", marginLeft: 6, fontSize: 11 }}>({p.status.toUpperCase()})</span>
+                    )}
+                  </span>
+                  <span style={{ fontWeight: 600, color: scoreColor(p.score) }}>{formatScore(p.score)}</span>
                 </div>
+              ))}
+              <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${theme.border}`, display: "flex", justifyContent: "space-between", paddingLeft: 40 }}>
+                <span style={{ fontSize: 12, color: theme.dim, fontWeight: 600 }}>Overall (all majors)</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(entry.totalScore) }}>{formatScore(entry.totalScore)}</span>
               </div>
-            )}
+            </div>
           </div>
         );
       })}
@@ -292,7 +273,6 @@ function FullLeaderboard({ tournamentId, theme }: { tournamentId: string; theme:
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [tournaments, setTournaments] = useState<{ id: string; name: string; locked: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/leaderboard")
@@ -342,9 +322,9 @@ function FullLeaderboard({ tournamentId, theme }: { tournamentId: string; theme:
       )}
 
       {isMasters ? (
-        <MastersLeaderboard sorted={sorted} tournamentName={tournamentName} expanded={expanded} setExpanded={setExpanded} />
+        <MastersLeaderboard sorted={sorted} tournamentName={tournamentName} />
       ) : (
-        <DefaultLeaderboard sorted={sorted} tournamentName={tournamentName} theme={theme} expanded={expanded} setExpanded={setExpanded} />
+        <DefaultLeaderboard sorted={sorted} tournamentName={tournamentName} theme={theme} />
       )}
     </div>
   );
