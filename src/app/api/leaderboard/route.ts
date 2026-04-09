@@ -1,5 +1,46 @@
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { fetchTournamentScores } from "@/lib/espn";
+
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function autoSyncLiveTournaments() {
+  const now = Date.now();
+  const tournaments = await prisma.tournament.findMany({
+    where: { espnId: { not: null } },
+  });
+
+  for (const tournament of tournaments) {
+    if (!tournament.espnId) continue;
+    const deadline = new Date(tournament.deadline).getTime();
+    // Only sync if live (past deadline, within 5 days)
+    if (now < deadline || now > deadline + 5 * 24 * 60 * 60 * 1000) continue;
+    // Skip if synced recently
+    if (tournament.lastSyncAt && now - tournament.lastSyncAt.getTime() < SYNC_INTERVAL_MS) continue;
+
+    try {
+      const { scores } = await fetchTournamentScores(tournament.espnId);
+      for (const score of scores) {
+        let golfer = await prisma.golfer.findUnique({ where: { espnId: score.espnId } });
+        if (!golfer) {
+          const byName = await prisma.golfer.findFirst({ where: { name: score.name } });
+          if (byName && byName.espnId.startsWith("pending-")) {
+            golfer = await prisma.golfer.update({ where: { id: byName.id }, data: { espnId: score.espnId } });
+          }
+        }
+        if (!golfer) continue;
+        await prisma.golferScore.upsert({
+          where: { golferId_tournamentId: { golferId: golfer.id, tournamentId: tournament.id } },
+          create: { golferId: golfer.id, tournamentId: tournament.id, round1: score.r1, round2: score.r2, round3: score.r3, round4: score.r4, totalToPar: score.totalToPar, status: score.status, position: score.position },
+          update: { round1: score.r1, round2: score.r2, round3: score.r3, round4: score.r4, totalToPar: score.totalToPar, status: score.status, position: score.position },
+        });
+      }
+      await prisma.tournament.update({ where: { id: tournament.id }, data: { lastSyncAt: new Date() } });
+    } catch (err) {
+      console.error(`Auto-sync failed for ${tournament.name}:`, err);
+    }
+  }
+}
 
 export async function GET() {
   try {
@@ -7,6 +48,9 @@ export async function GET() {
     if (!competitorId) {
       return Response.json({ error: "Not logged in" }, { status: 401 });
     }
+
+    // Auto-sync live tournaments before returning scores
+    await autoSyncLiveTournaments();
 
     const competitors = await prisma.competitor.findMany({
       select: { id: true, name: true },

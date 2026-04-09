@@ -36,17 +36,22 @@ function useCountdown(target: string | null) {
   return diff;
 }
 
-function formatCountdown(ms: number | null): { label: string; urgent: boolean; past: boolean } | null {
+function formatCountdown(ms: number | null): { label: string; urgent: boolean; past: boolean; live: boolean } | null {
   if (ms === null) return null;
-  if (ms <= 0) return { label: "Locked — Tee Off!", urgent: true, past: true };
+  if (ms <= 0) {
+    // Tournament lasts ~4 days from first tee
+    const daysPast = Math.abs(ms) / (1000 * 60 * 60 * 24);
+    if (daysPast <= 4) return { label: "LIVE", urgent: true, past: true, live: true };
+    return { label: "Complete", urgent: false, past: true, live: false };
+  }
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  if (d > 0) return { label: `${d}d ${h}h ${m}m ${sec}s`, urgent: false, past: false };
-  if (h > 0) return { label: `${h}h ${m}m ${sec}s`, urgent: true, past: false };
-  return { label: `${m}m ${sec}s`, urgent: true, past: false };
+  if (d > 0) return { label: `${d}d ${h}h ${m}m ${sec}s`, urgent: false, past: false, live: false };
+  if (h > 0) return { label: `${h}h ${m}m ${sec}s`, urgent: true, past: false, live: false };
+  return { label: `${m}m ${sec}s`, urgent: true, past: false, live: false };
 }
 
 function CountdownBadge({ deadline }: { deadline: string }) {
@@ -54,9 +59,26 @@ function CountdownBadge({ deadline }: { deadline: string }) {
   const cd = formatCountdown(diff);
   if (!cd) return null;
 
-  const color = cd.past ? "#f87171" : cd.urgent ? "#fb923c" : "#4ade80";
-  const bg = cd.past ? "rgba(248,113,113,0.12)" : cd.urgent ? "rgba(251,146,60,0.10)" : "rgba(74,222,128,0.12)";
-  const border = cd.past ? "rgba(248,113,113,0.3)" : cd.urgent ? "rgba(251,146,60,0.3)" : "rgba(74,222,128,0.3)";
+  if (cd.live) {
+    return (
+      <span style={{
+        display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12,
+        padding: "4px 12px", borderRadius: 20, background: "rgba(220,38,38,0.10)",
+        color: "#dc2626", border: "1px solid rgba(220,38,38,0.3)", fontWeight: 700,
+        letterSpacing: 1.5, textTransform: "uppercase",
+      }}>
+        <span style={{
+          width: 8, height: 8, borderRadius: "50%", background: "#dc2626",
+          animation: "livePulse 1.5s ease-in-out infinite",
+        }} />
+        LIVE
+      </span>
+    );
+  }
+
+  const color = cd.past ? "#737373" : cd.urgent ? "#fb923c" : "#4ade80";
+  const bg = cd.past ? "rgba(115,115,115,0.10)" : cd.urgent ? "rgba(251,146,60,0.10)" : "rgba(74,222,128,0.12)";
+  const border = cd.past ? "rgba(115,115,115,0.3)" : cd.urgent ? "rgba(251,146,60,0.3)" : "rgba(74,222,128,0.3)";
 
   return (
     <span style={{
@@ -64,7 +86,7 @@ function CountdownBadge({ deadline }: { deadline: string }) {
       padding: "4px 10px", borderRadius: 20, background: bg, color,
       border: `1px solid ${border}`, fontWeight: 600, fontVariantNumeric: "tabular-nums",
     }}>
-      {cd.past ? "🔒" : "⏱"} {cd.label}
+      {cd.past ? "✓" : "⏱"} {cd.label}
     </span>
   );
 }
@@ -73,56 +95,57 @@ function TournamentCard({ tournament, onClick }: { tournament: Tournament; onCli
   const theme = getTheme(tournament.name);
   const meta = TOURNAMENT_META[tournament.name];
   const isLocked = tournament.locked || new Date(tournament.deadline) <= new Date();
+  const diff = new Date(tournament.deadline).getTime() - Date.now();
+  const daysPast = diff <= 0 ? Math.abs(diff) / (1000 * 60 * 60 * 24) : 0;
+  const isLive = diff <= 0 && daysPast <= 4;
+  const isComplete = diff <= 0 && daysPast > 4;
+
+  const statusLabel = isLive ? "Live" : isComplete ? "Complete" : isLocked ? "Locked" : "Open";
+  const statusBg = isLive ? "rgba(220,38,38,0.10)" : isComplete ? "rgba(115,115,115,0.08)" : isLocked ? "rgba(248,113,113,0.12)" : theme.accentLight;
+  const statusColor = isLive ? "#dc2626" : isComplete ? "#737373" : isLocked ? "#f87171" : theme.accent;
+  const statusBorder = isLive ? "rgba(220,38,38,0.3)" : isComplete ? "rgba(115,115,115,0.2)" : isLocked ? "rgba(248,113,113,0.3)" : theme.accentBorder;
 
   return (
-    <button onClick={onClick} className="w-full text-left theme-transition" style={{
+    <button onClick={onClick} className="text-left theme-transition" style={{
       background: theme.gradient, border: `1px solid ${theme.border}`,
-      borderRadius: 14, padding: "20px", cursor: "pointer",
+      borderRadius: 14, padding: "16px", cursor: "pointer",
+      flex: "1 1 0", minWidth: 150,
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 8 }}>
+        {meta?.logo && (
+          <img src={meta.logo} alt="" style={{ width: 36, height: 36, objectFit: "contain" }} />
+        )}
         <div>
-          <div style={{ fontSize: 15, color: theme.accent, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
-            {meta?.emoji} {tournament.name}
+          <div style={{ fontSize: 13, color: theme.accent, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>
+            {tournament.name}
           </div>
-          <div style={{ fontSize: 13, color: theme.muted }}>{meta?.venue}</div>
-          <div style={{ fontSize: 12, color: theme.dim }}>{meta?.location}</div>
+          <div style={{ fontSize: 11, color: theme.muted, marginBottom: 2 }}>{meta?.venue}</div>
         </div>
         <div style={{
-          fontSize: 12, padding: "4px 10px", borderRadius: 20, fontWeight: 600,
-          background: isLocked ? "rgba(248,113,113,0.12)" : theme.accentLight,
-          color: isLocked ? "#f87171" : theme.accent,
-          border: `1px solid ${isLocked ? "rgba(248,113,113,0.3)" : theme.accentBorder}`,
+          fontSize: 11, padding: "3px 8px", borderRadius: 20, fontWeight: 600,
+          background: statusBg, color: statusColor,
+          border: `1px solid ${statusBorder}`,
         }}>
-          {isLocked ? "Locked" : "Open"}
+          {statusLabel}
         </div>
+        <CountdownBadge deadline={tournament.deadline} />
       </div>
-      <CountdownBadge deadline={tournament.deadline} />
     </button>
   );
 }
 
 function Rules() {
-  const [open, setOpen] = useState(false);
-  const theme = DEFAULT_THEME;
   return (
-    <div style={{ marginTop: 20, background: "#ffffff", border: `1px solid ${theme.border}`, borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-      <button onClick={() => setOpen(!open)} style={{
-        width: "100%", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
-        background: "none", border: "none", cursor: "pointer",
-      }}>
-        <h3 style={{ fontSize: 14, fontWeight: 700, color: theme.accent, margin: 0 }}>The Rules</h3>
-        <span style={{ color: theme.dim, fontSize: 12 }}>{open ? "▲" : "▼"}</span>
-      </button>
-      {open && (
-        <div style={{ padding: "0 20px 16px", fontSize: 13, color: theme.muted, lineHeight: 2 }}>
-          <p style={{ margin: "0 0 4px" }}>💷 <strong style={{ color: theme.text }}>£10 entry</strong> — winner takes the £60 pot</p>
-          <p style={{ margin: "0 0 4px" }}>⛳ Each major: <strong style={{ color: theme.text }}>2 Europeans · 1 American · 1 Rest of World</strong></p>
-          <p style={{ margin: "0 0 4px" }}>🚫 <strong style={{ color: theme.text }}>No player can be picked more than once</strong> across the 4 majors</p>
-          <p style={{ margin: "0 0 4px" }}>📊 Score = combined total to par for all 4 players · lowest wins</p>
-          <p style={{ margin: "0 0 4px" }}>✂️ Missed cut / WD: <strong style={{ color: theme.text }}>R1+R2 + worst R3 + worst R4 in field</strong></p>
-          <p style={{ margin: 0 }}>⏱ Picks can be <strong style={{ color: theme.text }}>updated right up to the first tee shot</strong> of each major</p>
-        </div>
-      )}
+    <div style={{ marginBottom: 20, background: "#ffffff", border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 14, padding: "16px 20px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+      <h3 style={{ fontSize: 14, fontWeight: 700, color: DEFAULT_THEME.accent, margin: "0 0 10px" }}>The Rules</h3>
+      <div style={{ fontSize: 13, color: DEFAULT_THEME.muted, lineHeight: 2 }}>
+        <p style={{ margin: "0 0 4px" }}>💷 <strong style={{ color: DEFAULT_THEME.text }}>£10 entry</strong> — winner takes the £60 pot</p>
+        <p style={{ margin: "0 0 4px" }}>⛳ Each major: <strong style={{ color: DEFAULT_THEME.text }}>2 Europeans · 1 American · 1 Rest of World</strong></p>
+        <p style={{ margin: "0 0 4px" }}>🚫 <strong style={{ color: DEFAULT_THEME.text }}>No player can be picked more than once</strong> across the 4 majors</p>
+        <p style={{ margin: "0 0 4px" }}>📊 Score = combined total to par for all 4 players · lowest wins</p>
+        <p style={{ margin: "0 0 4px" }}>✂️ Missed cut / WD: <strong style={{ color: DEFAULT_THEME.text }}>R1+R2 + worst R3 + worst R4 in field</strong></p>
+        <p style={{ margin: 0 }}>⏱ Picks can be <strong style={{ color: DEFAULT_THEME.text }}>updated right up to the first tee shot</strong> of each major</p>
+      </div>
     </div>
   );
 }
@@ -170,44 +193,36 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
   if (view === "home") {
     return (
       <div style={{ background: DEFAULT_THEME.bg, minHeight: "100vh" }} className="theme-transition">
-        <header style={{ background: "#ffffff", borderBottom: `1px solid ${DEFAULT_THEME.border}`, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-          <div style={{ maxWidth: 600, margin: "0 auto", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <header style={{ background: "#165f3b", borderBottom: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: DEFAULT_THEME.accent, margin: 0 }}>Golf Majors 2026</h1>
-              <p style={{ fontSize: 12, color: DEFAULT_THEME.muted, margin: "2px 0 0" }}>Logged in as {user.name}</p>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: "#d4af37", margin: 0 }}>Golf Majors 2026</h1>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", margin: "2px 0 0" }}>Logged in as {user.name}</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 12, color: DEFAULT_THEME.accent, fontWeight: 600, background: DEFAULT_THEME.accentLight, padding: "4px 10px", borderRadius: 20, border: `1px solid ${DEFAULT_THEME.accentBorder}` }}>
+              <span style={{ fontSize: 12, color: "#d4af37", fontWeight: 600, background: "rgba(212,175,55,0.15)", padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(212,175,55,0.3)" }}>
                 £60 pot
               </span>
-              <button onClick={logout} style={{ fontSize: 12, color: DEFAULT_THEME.dim, background: "none", border: "none", cursor: "pointer" }}>
+              <button onClick={logout} style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", background: "none", border: "none", cursor: "pointer" }}>
                 Logout
               </button>
             </div>
           </div>
         </header>
 
-        <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
-          {/* Overall standings — front and centre */}
-          <div style={{ marginBottom: 4 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: DEFAULT_THEME.accent, margin: "0 0 4px", fontStyle: "italic" }}>
-              Overall Standings
-            </h2>
-            <p style={{ fontSize: 13, color: DEFAULT_THEME.muted, margin: "0 0 16px" }}>Cumulative score across all revealed majors</p>
-          </div>
-          <div style={{ background: "#ffffff", border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 14, padding: "8px 12px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <Leaderboard compact />
-          </div>
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px" }}>
+          {/* Rules */}
+          <Rules />
+
+          {/* Overall standings */}
+          <Leaderboard compact />
 
           {/* Tournament cards */}
-          <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ marginTop: 20, display: "flex", flexDirection: "row", gap: 12, overflowX: "auto" }}>
             {tournaments.map((t) => (
               <TournamentCard key={t.id} tournament={t} onClick={() => openTournament(t)} />
             ))}
           </div>
-
-          {/* Rules — collapsible */}
-          <Rules />
 
           {/* Admin link */}
           {user.isAdmin && (

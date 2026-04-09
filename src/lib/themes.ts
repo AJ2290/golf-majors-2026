@@ -105,9 +105,9 @@ export function getTheme(tournamentName: string): TournamentTheme {
   return THEMES[tournamentName] || DEFAULT_THEME;
 }
 
-export const TOURNAMENT_META: Record<string, { emoji: string; venue: string; location: string }> = {
-  "The Masters": { emoji: "🌺", venue: "Augusta National GC", location: "Augusta, Georgia" },
-  "PGA Championship": { emoji: "⚡", venue: "Aronimink Golf Club", location: "Newtown Square, Pennsylvania" },
-  "US Open": { emoji: "🇺🇸", venue: "Shinnecock Hills GC", location: "Southampton, New York" },
-  "The Open": { emoji: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", venue: "Royal Birkdale", location: "Southport, England" },
+export const TOURNAMENT_META: Record<string, { emoji: string; venue: string; location: string; logo: string }> = {
+  "The Masters": { emoji: "🌺", venue: "Augusta National GC", location: "Augusta, Georgia", logo: "/masters-logo.png" },
+  "PGA Championship": { emoji: "⚡", venue: "Aronimink Golf Club", location: "Newtown Square, Pennsylvania", logo: "/pga-logo.png" },
+  "US Open": { emoji: "🇺🇸", venue: "Shinnecock Hills GC", location: "Southampton, New York", logo: "/usopen-logo.png" },
+  "The Open": { emoji: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", venue: "Royal Birkdale", location: "Southport, England", logo: "/theopen-logo.png" },
 };

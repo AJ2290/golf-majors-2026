@@ -27,3 +27,8 @@ html, body {
 .theme-transition {
   transition: background-color 0.4s ease, border-color 0.3s ease;
 }
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}

@@ -33,17 +33,16 @@ function scoreColor(score: number) {
 }
 
 const MAJOR_COLS = [
-  { key: "The Masters", label: "MST" },
-  { key: "PGA Championship", label: "PGA" },
-  { key: "US Open", label: "USO" },
-  { key: "The Open", label: "OPN" },
+  { key: "The Masters", logo: "/masters-logo.png" },
+  { key: "PGA Championship", logo: "/pga-logo.png" },
+  { key: "US Open", logo: "/usopen-logo.png" },
+  { key: "The Open", logo: "/theopen-logo.png" },
 ];
 
-// Compact mode: shown on the home page — table with per-major columns
+// Compact mode: Sky Sports Masters style — light grey, clean rows, green scores
 function CompactLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const theme = DEFAULT_THEME;
 
   useEffect(() => {
     fetch("/api/leaderboard")
@@ -54,46 +53,236 @@ function CompactLeaderboard() {
       });
   }, []);
 
-  if (loading) return <div style={{ color: theme.dim, fontSize: 13 }}>Loading...</div>;
+  if (loading) return <div style={{ color: "rgba(0,0,0,0.4)", fontSize: 13 }}>Loading...</div>;
 
   const hasAnyScores = leaderboard.some((e) => Object.keys(e.majors).length > 0);
 
-  const th = { padding: "10px 8px", fontSize: 11, fontWeight: 700, color: theme.accent, letterSpacing: 1.2, textTransform: "uppercase" as const, borderBottom: `1px solid ${theme.border}` };
-  const td = { padding: "12px 8px", borderBottom: `1px solid ${theme.border}`, fontSize: 13 };
-
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={{ ...th, width: 30, textAlign: "center" }}></th>
-            <th style={{ ...th, textAlign: "left" }}>Player</th>
-            {MAJOR_COLS.map((m) => (
-              <th key={m.key} style={{ ...th, textAlign: "center" }}>{m.label}</th>
-            ))}
-            <th style={{ ...th, textAlign: "right" }}>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {leaderboard.map((entry, i) => (
-            <tr key={entry.id}>
-              <td style={{ ...td, textAlign: "center", fontWeight: 700, color: theme.dim }}>{hasAnyScores ? i + 1 : "—"}</td>
-              <td style={{ ...td, fontWeight: 700, color: theme.text }}>{entry.name}</td>
-              {MAJOR_COLS.map((m) => {
-                const major = entry.majors[m.key];
-                return (
-                  <td key={m.key} style={{ ...td, textAlign: "center", color: major ? scoreColor(major.score) : theme.dim, fontWeight: major ? 600 : 400 }}>
-                    {major ? formatScore(major.score) : "TBP"}
-                  </td>
-                );
-              })}
-              <td style={{ ...td, textAlign: "right", fontWeight: 700, color: hasAnyScores ? scoreColor(entry.totalScore) : theme.dim }}>
-                {hasAnyScores ? formatScore(entry.totalScore) : "—"}
-              </td>
+    <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #ddd" }}>
+      {/* Green header bar */}
+      <div style={{
+        background: "#165f3b", padding: "12px 20px",
+        display: "flex", justifyContent: "center", alignItems: "center",
+      }}>
+        <span style={{
+          fontSize: 20, fontWeight: 700, color: "#ffffff",
+          fontStyle: "italic", letterSpacing: 1,
+        }}>
+          Overall Standings
+        </span>
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", background: "#ffffff" }}>
+          <thead>
+            <tr style={{ background: "#f0f0f0" }}>
+              <th style={{ padding: "10px 8px", width: 30, textAlign: "center", fontSize: 11, fontWeight: 700, color: "#555", borderBottom: "2px solid #165f3b" }}></th>
+              <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#555", borderBottom: "2px solid #165f3b", textTransform: "uppercase", letterSpacing: 1 }}>Player</th>
+              {MAJOR_COLS.map((m) => (
+                <th key={m.key} style={{ padding: "8px 8px", textAlign: "center", borderBottom: "2px solid #165f3b" }}>
+                  <img src={m.logo} alt="" style={{ width: 24, height: 24, objectFit: "contain", display: "block", margin: "0 auto" }} />
+                </th>
+              ))}
+              <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 11, fontWeight: 700, color: "#555", borderBottom: "2px solid #165f3b", textTransform: "uppercase", letterSpacing: 1 }}>
+                Total
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {leaderboard.map((entry, i) => (
+              <tr key={entry.id} style={{ background: i % 2 === 0 ? "#ffffff" : "#f7f7f7" }}>
+                <td style={{ padding: "12px 8px", textAlign: "center", fontWeight: 700, color: "#165f3b", fontSize: 14, borderBottom: "1px solid #e5e5e5" }}>
+                  {hasAnyScores ? i + 1 : "—"}
+                </td>
+                <td style={{ padding: "12px 12px", fontWeight: 700, color: "#1a1a1a", fontSize: 14, borderBottom: "1px solid #e5e5e5", whiteSpace: "nowrap", textTransform: "uppercase" }}>
+                  {entry.name}
+                </td>
+                {MAJOR_COLS.map((m) => {
+                  const major = entry.majors[m.key];
+                  return (
+                    <td key={m.key} style={{ padding: "12px 8px", textAlign: "center", borderBottom: "1px solid #e5e5e5" }}>
+                      {major ? (
+                        <span style={{
+                          fontSize: 14, fontWeight: 700,
+                          color: scoreColor(major.score),
+                        }}>
+                          {formatScore(major.score)}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#bbb", fontSize: 12 }}>—</span>
+                      )}
+                    </td>
+                  );
+                })}
+                <td style={{ padding: "12px 12px", textAlign: "center", fontWeight: 800, fontSize: 15, color: hasAnyScores ? scoreColor(entry.totalScore) : "#bbb", borderBottom: "1px solid #e5e5e5" }}>
+                  {hasAnyScores ? formatScore(entry.totalScore) : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Masters leaderboard — Sky Sports style: light grey rows, green header, clean
+function MastersLeaderboard({ sorted, tournamentName, expanded, setExpanded }: {
+  sorted: LeaderboardEntry[];
+  tournamentName: string;
+  expanded: string | null;
+  setExpanded: (id: string | null) => void;
+}) {
+  return (
+    <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #ddd" }}>
+      {/* Green header */}
+      <div style={{
+        background: "#165f3b", padding: "14px 20px",
+        display: "flex", justifyContent: "center", alignItems: "center",
+      }}>
+        <span style={{
+          fontSize: 22, fontWeight: 700, color: "#ffffff",
+          fontStyle: "italic", letterSpacing: 1,
+        }}>
+          Masters
+        </span>
+      </div>
+
+      {/* Subheader */}
+      <div style={{
+        background: "#f0f0f0", padding: "8px 20px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        borderBottom: "2px solid #165f3b",
+      }}>
+        <span style={{ fontSize: 11, color: "#555", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Leaderboard</span>
+        <span style={{ fontSize: 12, color: "#165f3b", fontWeight: 600 }}>£60 pot</span>
+      </div>
+
+      {/* Rows */}
+      {sorted.map((entry, i) => {
+        const major = entry.majors[tournamentName];
+        const isExpanded = expanded === entry.id;
+        return (
+          <div key={entry.id}>
+            <button
+              onClick={() => setExpanded(isExpanded ? null : entry.id)}
+              style={{
+                width: "100%", padding: "12px 20px",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: i % 2 === 0 ? "#ffffff" : "#f7f7f7",
+                border: "none", cursor: "pointer",
+                borderBottom: "1px solid #e5e5e5",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <span style={{ fontSize: 16, fontWeight: 700, width: 24, color: "#165f3b", textAlign: "center" }}>
+                  {i + 1}
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a", textTransform: "uppercase" }}>
+                  {entry.name}
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: scoreColor(major.score) }}>
+                  {formatScore(major.score)}
+                </span>
+              </div>
+            </button>
+
+            {isExpanded && (
+              <div style={{ background: "#fafafa", borderBottom: "1px solid #e5e5e5" }}>
+                {major.picks.map((p) => (
+                  <div key={p.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 20px 8px 58px", fontSize: 13, borderBottom: "1px solid #eee" }}>
+                    <span style={{ color: "#333", fontWeight: 600 }}>
+                      {p.name}
+                      {p.status !== "active" && (
+                        <span style={{ color: "#dc2626", marginLeft: 6, fontSize: 11, fontWeight: 700 }}>({p.status.toUpperCase()})</span>
+                      )}
+                    </span>
+                    <span style={{ fontWeight: 700, color: scoreColor(p.score) }}>{formatScore(p.score)}</span>
+                  </div>
+                ))}
+                <div style={{ padding: "8px 20px 10px 58px", borderTop: "1px solid #ddd", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 12, color: "#165f3b", fontWeight: 700 }}>Overall (all majors)</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: scoreColor(entry.totalScore) }}>{formatScore(entry.totalScore)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Default leaderboard style (used for PGA, US Open, The Open)
+function DefaultLeaderboard({ sorted, tournamentName, theme, expanded, setExpanded }: {
+  sorted: LeaderboardEntry[];
+  tournamentName: string;
+  theme: TournamentTheme;
+  expanded: string | null;
+  setExpanded: (id: string | null) => void;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {sorted.map((entry, i) => {
+        const major = entry.majors[tournamentName];
+        return (
+          <div
+            key={entry.id}
+            style={{
+              background: theme.bgCard,
+              border: `1px solid ${theme.border}`,
+              borderRadius: 12,
+              overflow: "hidden",
+            }}
+          >
+            <button
+              onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
+              style={{
+                width: "100%",
+                padding: "14px 16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 18, fontWeight: 800, width: 28, color: i === 0 ? theme.accent : theme.dim }}>
+                  {i + 1}
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: theme.text }}>{entry.name}</span>
+              </div>
+              <span style={{ fontSize: 18, fontWeight: 700, color: scoreColor(major.score) }}>
+                {formatScore(major.score)}
+              </span>
+            </button>
+
+            {expanded === entry.id && (
+              <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${theme.border}` }}>
+                {major.picks.map((p) => (
+                  <div key={p.name} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 6px 40px", fontSize: 13 }}>
+                    <span style={{ color: theme.muted }}>
+                      {p.name}
+                      {p.status !== "active" && (
+                        <span style={{ color: "#f87171", marginLeft: 6, fontSize: 11 }}>({p.status.toUpperCase()})</span>
+                      )}
+                    </span>
+                    <span style={{ fontWeight: 600, color: scoreColor(p.score) }}>{formatScore(p.score)}</span>
+                  </div>
+                ))}
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${theme.border}`, display: "flex", justifyContent: "space-between", paddingLeft: 40 }}>
+                  <span style={{ fontSize: 12, color: theme.dim, fontWeight: 600 }}>Overall (all majors)</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(entry.totalScore) }}>{formatScore(entry.totalScore)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -119,100 +308,44 @@ function FullLeaderboard({ tournamentId, theme }: { tournamentId: string; theme:
 
   const currentTournament = tournaments.find((t) => t.id === tournamentId);
   const tournamentName = currentTournament?.name || "";
+  const isMasters = tournamentName === "The Masters";
 
   const hasScores = leaderboard.some((e) => e.majors[tournamentName]);
 
   if (!hasScores) {
     return (
-      <div style={{ background: theme.bgCard, border: `1px solid ${theme.border}`, borderRadius: 14, padding: "32px 20px", textAlign: "center" }}>
+      <div style={{
+        background: isMasters ? "#1a472a" : theme.bgCard,
+        border: isMasters ? "3px solid #d4af37" : `1px solid ${theme.border}`,
+        borderRadius: 14, padding: "32px 20px", textAlign: "center",
+      }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>🏌️</div>
-        <div style={{ color: theme.muted, fontSize: 14 }}>No scores yet</div>
-        <div style={{ color: theme.dim, fontSize: 12, marginTop: 4 }}>The leaderboard will update once the tournament begins</div>
+        <div style={{ color: isMasters ? "#d4af37" : theme.muted, fontSize: 14 }}>No scores yet</div>
+        <div style={{ color: isMasters ? "rgba(255,255,255,0.5)" : theme.dim, fontSize: 12, marginTop: 4 }}>The leaderboard will update once the tournament begins</div>
       </div>
     );
   }
 
-  // Sort by this tournament's score
   const sorted = [...leaderboard]
     .filter((e) => e.majors[tournamentName])
     .sort((a, b) => (a.majors[tournamentName]?.score ?? 999) - (b.majors[tournamentName]?.score ?? 999));
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: theme.text, margin: 0 }}>Leaderboard</h2>
-        <span style={{ fontSize: 12, color: theme.accent, fontWeight: 600, background: theme.accentLight, padding: "4px 10px", borderRadius: 20, border: `1px solid ${theme.accentBorder}` }}>
-          £60 pot
-        </span>
-      </div>
+      {!isMasters && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: theme.text, margin: 0 }}>Leaderboard</h2>
+          <span style={{ fontSize: 12, color: theme.accent, fontWeight: 600, background: theme.accentLight, padding: "4px 10px", borderRadius: 20, border: `1px solid ${theme.accentBorder}` }}>
+            £60 pot
+          </span>
+        </div>
+      )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {sorted.map((entry, i) => {
-          const major = entry.majors[tournamentName];
-          return (
-            <div
-              key={entry.id}
-              style={{
-                background: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: 12,
-                overflow: "hidden",
-              }}
-            >
-              <button
-                onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}
-                style={{
-                  width: "100%",
-                  padding: "14px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                    width: 28,
-                    color: i === 0 ? theme.accent : theme.dim,
-                  }}>
-                    {i + 1}
-                  </span>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: theme.text }}>{entry.name}</span>
-                </div>
-                <span style={{ fontSize: 18, fontWeight: 700, color: scoreColor(major.score) }}>
-                  {formatScore(major.score)}
-                </span>
-              </button>
-
-              {expanded === entry.id && (
-                <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${theme.border}` }}>
-                  {major.picks.map((p) => (
-                    <div key={p.name} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 6px 40px", fontSize: 13 }}>
-                      <span style={{ color: theme.muted }}>
-                        {p.name}
-                        {p.status !== "active" && (
-                          <span style={{ color: "#f87171", marginLeft: 6, fontSize: 11 }}>({p.status.toUpperCase()})</span>
-                        )}
-                      </span>
-                      <span style={{ fontWeight: 600, color: scoreColor(p.score) }}>{formatScore(p.score)}</span>
-                    </div>
-                  ))}
-
-                  {/* Overall score across all majors */}
-                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${theme.border}`, display: "flex", justifyContent: "space-between", paddingLeft: 40 }}>
-                    <span style={{ fontSize: 12, color: theme.dim, fontWeight: 600 }}>Overall (all majors)</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(entry.totalScore) }}>{formatScore(entry.totalScore)}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {isMasters ? (
+        <MastersLeaderboard sorted={sorted} tournamentName={tournamentName} expanded={expanded} setExpanded={setExpanded} />
+      ) : (
+        <DefaultLeaderboard sorted={sorted} tournamentName={tournamentName} theme={theme} expanded={expanded} setExpanded={setExpanded} />
+      )}
     </div>
   );
 }
