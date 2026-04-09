@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Competitor {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  pin       String
+  isAdmin   Boolean  @default(false)
+  picks     Pick[]
+  createdAt DateTime @default(now())
+}
+
+model Tournament {
+  id       String        @id @default(cuid())
+  name     String
+  year     Int
+  espnId   String?
+  deadline DateTime
+  locked   Boolean       @default(false)
+  picks    Pick[]
+  scores   GolferScore[]
+
+  @@unique([name, year])
+}
+
+model Golfer {
+  id     String        @id @default(cuid())
+  name   String
+  espnId String        @unique
+  region String // EU, US, ROW
+  picks  Pick[]
+  scores GolferScore[]
+}
+
+model Pick {
+  id           String     @id @default(cuid())
+  competitor   Competitor @relation(fields: [competitorId], references: [id])
+  competitorId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  tournamentId String
+  golfer       Golfer     @relation(fields: [golferId], references: [id])
+  golferId     String
+  slot         String // eu1, eu2, us, row
+  createdAt    DateTime   @default(now())
+
+  @@unique([competitorId, tournamentId, slot])
+  @@unique([competitorId, tournamentId, golferId])
+}
+
+model GolferScore {
+  id           String     @id @default(cuid())
+  golfer       Golfer     @relation(fields: [golferId], references: [id])
+  golferId     String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  tournamentId String
+  round1       Int?
+  round2       Int?
+  round3       Int?
+  round4       Int?
+  totalToPar   Int?
+  position     String?
+  status       String     @default("active") // active, cut, wd, dq
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([golferId, tournamentId])
+}
