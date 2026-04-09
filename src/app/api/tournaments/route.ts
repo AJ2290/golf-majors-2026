@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { ensureTournaments } from "@/lib/seed";
 
 export async function GET() {
   const competitorId = await getSession();
   if (!competitorId) {
     return Response.json({ error: "Not logged in" }, { status: 401 });
   }
+
+  await ensureTournaments();
 
   const tournaments = await prisma.tournament.findMany({
     orderBy: { deadline: "asc" },

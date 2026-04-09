@@ -1,10 +1,10 @@
 export const COMPETITORS = ["Ross", "Euan", "AJ", "Ryan", "Sam", "Stuart"];
 
 export const MAJORS_2026 = [
-  { name: "The Masters", deadline: "2026-04-10T12:00:00Z", espnId: "" },
-  { name: "PGA Championship", deadline: "2026-05-14T12:00:00Z", espnId: "" },
-  { name: "US Open", deadline: "2026-06-18T12:00:00Z", espnId: "" },
-  { name: "The Open", deadline: "2026-07-16T12:00:00Z", espnId: "" },
+  { name: "The Masters", deadline: "2026-04-10T12:00:00Z", espnId: "401580329" },
+  { name: "PGA Championship", deadline: "2026-05-14T12:00:00Z", espnId: "401580330" },
+  { name: "US Open", deadline: "2026-06-18T12:00:00Z", espnId: "401580331" },
+  { name: "The Open", deadline: "2026-07-16T12:00:00Z", espnId: "401580332" },
 ];
 
 export const SLOTS = [

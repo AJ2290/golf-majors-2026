@@ -167,8 +167,7 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
 
   const openTournament = (t: Tournament) => {
     setActiveTournament(t);
-    const isLocked = t.locked || new Date(t.deadline) <= new Date();
-    setTournamentTab(isLocked ? "leaderboard" : "picks");
+    setTournamentTab("picks");
     setView("tournament");
   };
 
@@ -224,26 +223,7 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
             <Leaderboard compact />
           </div>
 
-          {/* Admin link */}
-          {user.isAdmin && (
-            <button
-              onClick={() => { setView("tournament"); setActiveTournament(null); setTournamentTab("admin"); }}
-              style={{
-                marginTop: 16,
-                width: "100%",
-                padding: "12px",
-                background: DEFAULT_THEME.bgCard,
-                border: `1px solid ${DEFAULT_THEME.border}`,
-                borderRadius: 10,
-                color: DEFAULT_THEME.muted,
-                fontSize: 13,
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Admin Panel
-            </button>
-          )}
+          {/* Admin — hidden, triple-tap the header to access */}
         </div>
       </div>
     );
@@ -252,10 +232,9 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
   // ── Tournament view ──
   const isAdmin = user.isAdmin && tournamentTab === "admin";
   const tabs: { key: TournamentTab; label: string; show: boolean }[] = [
-    { key: "leaderboard", label: "Leaderboard", show: !!activeTournament },
     { key: "picks", label: "My Picks", show: !!activeTournament },
     { key: "all-picks", label: "All Picks", show: !!activeTournament },
-    { key: "admin", label: "Admin", show: user.isAdmin },
+    { key: "leaderboard", label: "Leaderboard", show: !!activeTournament },
   ];
 
   return (
