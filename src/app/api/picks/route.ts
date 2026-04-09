@@ -60,6 +60,20 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Cannot pick the same golfer twice" }, { status: 400 });
     }
 
+    // Check no golfer reuse across other majors
+    const existingPicks = await prisma.pick.findMany({
+      where: { competitorId, tournamentId: { not: tournamentId } },
+      include: { golfer: true, tournament: true },
+    });
+    for (const golferId of golferIds) {
+      const clash = existingPicks.find((p) => p.golferId === golferId);
+      if (clash) {
+        return Response.json({
+          error: `${clash.golfer.name} already picked in ${clash.tournament.name}`,
+        }, { status: 400 });
+      }
+    }
+
     // Upsert picks (delete old + create new)
     await prisma.$transaction([
       prisma.pick.deleteMany({ where: { competitorId, tournamentId } }),

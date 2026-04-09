@@ -160,7 +160,7 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
   if (view === "home") {
     return (
       <div style={{ background: DEFAULT_THEME.bg, minHeight: "100vh" }} className="theme-transition">
-        <header style={{ background: "linear-gradient(180deg, #040f08 0%, #09170e 100%)", borderBottom: `1px solid ${DEFAULT_THEME.border}` }}>
+        <header style={{ background: "#ffffff", borderBottom: `1px solid ${DEFAULT_THEME.border}`, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
           <div style={{ maxWidth: 600, margin: "0 auto", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 800, color: DEFAULT_THEME.accent, margin: 0 }}>Golf Majors 2026</h1>

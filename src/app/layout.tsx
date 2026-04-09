@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geist.variable} h-full`}>
-      <body className="min-h-full text-white font-[family-name:var(--font-geist)]" style={{ background: "#09170e" }}>
+      <body className="min-h-full font-[family-name:var(--font-geist)]" style={{ background: "#f5f2ec", color: "#1a2e1a" }}>
         {children}
       </body>
     </html>

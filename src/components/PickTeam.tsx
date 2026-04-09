@@ -129,7 +129,7 @@ export function PickTeam({
                 placeholder={slot.placeholder}
                 style={{
                   width: "100%", boxSizing: "border-box",
-                  background: theme.bg, border: `1px solid ${theme.border}`,
+                  background: "#ffffff", border: `1px solid ${theme.border}`,
                   borderRadius: 8, padding: "10px 12px", fontSize: 14,
                   color: theme.text, outline: "none",
                 }}

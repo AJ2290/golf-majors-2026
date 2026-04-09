@@ -27,9 +27,9 @@ function formatScore(score: number) {
 }
 
 function scoreColor(score: number) {
-  if (score < 0) return "#4ade80";
-  if (score === 0) return "#c9a455";
-  return "#f87171";
+  if (score < 0) return "#16a34a";
+  if (score === 0) return "#737373";
+  return "#dc2626";
 }
 
 // Compact mode: shown on the home page
