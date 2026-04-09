@@ -150,6 +150,37 @@ function Rules() {
   );
 }
 
+function ComplainSection() {
+  const [showResponse, setShowResponse] = useState(false);
+
+  return (
+    <div style={{ marginTop: 20, background: "#ffffff", border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 14, padding: "16px 20px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", textAlign: "center" }}>
+      <p style={{ fontSize: 13, color: DEFAULT_THEME.muted, margin: "0 0 12px" }}>
+        If you wish to complain or give the developers feedback, please click here
+      </p>
+      {!showResponse ? (
+        <button
+          onClick={() => setShowResponse(true)}
+          style={{
+            padding: "10px 32px", fontSize: 14, fontWeight: 700, color: "#ffffff",
+            background: "#dc2626", border: "none", borderRadius: 8, cursor: "pointer",
+            textTransform: "uppercase", letterSpacing: 1,
+          }}
+        >
+          Complain
+        </button>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "12px 0" }}>
+          <img src="/middle-finger.jpeg" alt="" style={{ maxWidth: 280, borderRadius: 12 }} />
+          <p style={{ fontSize: 32, fontWeight: 900, color: "#dc2626", margin: 0, textTransform: "uppercase", letterSpacing: 2 }}>
+            FUCK OFF RYAN!!!
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [view, setView] = useState<View>("home");
   const [activeTournament, setActiveTournament] = useState<Tournament | null>(null);
@@ -223,6 +254,9 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
               <TournamentCard key={t.id} tournament={t} onClick={() => openTournament(t)} />
             ))}
           </div>
+
+          {/* Feedback */}
+          <ComplainSection />
 
           {/* Admin link */}
           {user.isAdmin && (
