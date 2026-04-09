@@ -32,7 +32,14 @@ function scoreColor(score: number) {
   return "#dc2626";
 }
 
-// Compact mode: shown on the home page
+const MAJOR_COLS = [
+  { key: "The Masters", label: "MST" },
+  { key: "PGA Championship", label: "PGA" },
+  { key: "US Open", label: "USO" },
+  { key: "The Open", label: "OPN" },
+];
+
+// Compact mode: shown on the home page — table with per-major columns
 function CompactLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,32 +56,44 @@ function CompactLeaderboard() {
 
   if (loading) return <div style={{ color: theme.dim, fontSize: 13 }}>Loading...</div>;
 
+  const hasAnyScores = leaderboard.some((e) => Object.keys(e.majors).length > 0);
+
+  const th = { padding: "10px 8px", fontSize: 11, fontWeight: 700, color: theme.accent, letterSpacing: 1.2, textTransform: "uppercase" as const, borderBottom: `1px solid ${theme.border}` };
+  const td = { padding: "12px 8px", borderBottom: `1px solid ${theme.border}`, fontSize: 13 };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      {leaderboard.map((entry, i) => (
-        <div
-          key={entry.id}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "8px 12px",
-            borderRadius: 8,
-            background: i === 0 ? theme.accentLight : "transparent",
-            border: i === 0 ? `1px solid ${theme.accentBorder}` : "1px solid transparent",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? theme.accent : theme.dim, width: 20 }}>
-              {i + 1}
-            </span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: theme.text }}>{entry.name}</span>
-          </div>
-          <span style={{ fontSize: 14, fontWeight: 700, color: scoreColor(entry.totalScore) }}>
-            {formatScore(entry.totalScore)}
-          </span>
-        </div>
-      ))}
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={{ ...th, width: 30, textAlign: "center" }}></th>
+            <th style={{ ...th, textAlign: "left" }}>Player</th>
+            {MAJOR_COLS.map((m) => (
+              <th key={m.key} style={{ ...th, textAlign: "center" }}>{m.label}</th>
+            ))}
+            <th style={{ ...th, textAlign: "right" }}>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {leaderboard.map((entry, i) => (
+            <tr key={entry.id}>
+              <td style={{ ...td, textAlign: "center", fontWeight: 700, color: theme.dim }}>{hasAnyScores ? i + 1 : "—"}</td>
+              <td style={{ ...td, fontWeight: 700, color: theme.text }}>{entry.name}</td>
+              {MAJOR_COLS.map((m) => {
+                const major = entry.majors[m.key];
+                return (
+                  <td key={m.key} style={{ ...td, textAlign: "center", color: major ? scoreColor(major.score) : theme.dim, fontWeight: major ? 600 : 400 }}>
+                    {major ? formatScore(major.score) : "TBP"}
+                  </td>
+                );
+              })}
+              <td style={{ ...td, textAlign: "right", fontWeight: 700, color: hasAnyScores ? scoreColor(entry.totalScore) : theme.dim }}>
+                {hasAnyScores ? formatScore(entry.totalScore) : "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

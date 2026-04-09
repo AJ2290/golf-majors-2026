@@ -189,10 +189,13 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
 
         <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
           {/* Overall standings — front and centre */}
-          <div style={{ background: "#ffffff", border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 14, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: DEFAULT_THEME.accent, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>
+          <div style={{ marginBottom: 4 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: DEFAULT_THEME.accent, margin: "0 0 4px", fontStyle: "italic" }}>
               Overall Standings
             </h2>
+            <p style={{ fontSize: 13, color: DEFAULT_THEME.muted, margin: "0 0 16px" }}>Cumulative score across all revealed majors</p>
+          </div>
+          <div style={{ background: "#ffffff", border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 14, padding: "8px 12px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
             <Leaderboard compact />
           </div>
 
