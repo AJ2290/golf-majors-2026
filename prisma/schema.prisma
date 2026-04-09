@@ -17,14 +17,15 @@ model Competitor {
 }
 
 model Tournament {
-  id       String        @id @default(cuid())
-  name     String
-  year     Int
-  espnId   String?
-  deadline DateTime
-  locked   Boolean       @default(false)
-  picks    Pick[]
-  scores   GolferScore[]
+  id         String        @id @default(cuid())
+  name       String
+  year       Int
+  espnId     String?
+  deadline   DateTime
+  locked     Boolean       @default(false)
+  lastSyncAt DateTime?
+  picks      Pick[]
+  scores     GolferScore[]
 
   @@unique([name, year])
 }

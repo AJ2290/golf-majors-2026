@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Leaderboard } from "./Leaderboard";
 import { PickTeam } from "./PickTeam";
 import { AllPicks } from "./AllPicks";
+import { Admin } from "./Admin";
 import { getTheme, TOURNAMENT_META, DEFAULT_THEME, type TournamentTheme } from "@/lib/themes";
 
 interface User {
@@ -21,7 +22,7 @@ interface Tournament {
 }
 
 type View = "home" | "tournament";
-type TournamentTab = "picks" | "all-picks" | "leaderboard";
+type TournamentTab = "picks" | "all-picks" | "leaderboard" | "admin";
 
 function useCountdown(target: string | null) {
   const [diff, setDiff] = useState<number | null>(null);
@@ -101,18 +102,27 @@ function TournamentCard({ tournament, onClick }: { tournament: Tournament; onCli
 }
 
 function Rules() {
+  const [open, setOpen] = useState(false);
   const theme = DEFAULT_THEME;
   return (
-    <div style={{ background: theme.bgCard, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 20 }}>
-      <h3 style={{ fontSize: 16, fontWeight: 700, color: theme.accent, margin: "0 0 12px" }}>The Rules</h3>
-      <div style={{ fontSize: 13, color: theme.muted, lineHeight: 2 }}>
-        <p style={{ margin: "0 0 4px" }}>💷 <strong style={{ color: theme.text }}>£10 entry</strong> — winner takes the £60 pot</p>
-        <p style={{ margin: "0 0 4px" }}>⛳ Each major: <strong style={{ color: theme.text }}>2 Europeans · 1 American · 1 Rest of World</strong></p>
-        <p style={{ margin: "0 0 4px" }}>🚫 <strong style={{ color: theme.text }}>No player can be picked more than once</strong> across the 4 majors</p>
-        <p style={{ margin: "0 0 4px" }}>📊 Score = combined total to par for all 4 players · lowest wins</p>
-        <p style={{ margin: "0 0 4px" }}>✂️ Missed cut / WD: <strong style={{ color: theme.text }}>R1+R2 + worst R3 + worst R4 in field</strong></p>
-        <p style={{ margin: 0 }}>⏱ Picks can be <strong style={{ color: theme.text }}>updated right up to the first tee shot</strong> of each major</p>
-      </div>
+    <div style={{ marginTop: 20, background: "#ffffff", border: `1px solid ${theme.border}`, borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+      <button onClick={() => setOpen(!open)} style={{
+        width: "100%", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
+        background: "none", border: "none", cursor: "pointer",
+      }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, color: theme.accent, margin: 0 }}>The Rules</h3>
+        <span style={{ color: theme.dim, fontSize: 12 }}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div style={{ padding: "0 20px 16px", fontSize: 13, color: theme.muted, lineHeight: 2 }}>
+          <p style={{ margin: "0 0 4px" }}>💷 <strong style={{ color: theme.text }}>£10 entry</strong> — winner takes the £60 pot</p>
+          <p style={{ margin: "0 0 4px" }}>⛳ Each major: <strong style={{ color: theme.text }}>2 Europeans · 1 American · 1 Rest of World</strong></p>
+          <p style={{ margin: "0 0 4px" }}>🚫 <strong style={{ color: theme.text }}>No player can be picked more than once</strong> across the 4 majors</p>
+          <p style={{ margin: "0 0 4px" }}>📊 Score = combined total to par for all 4 players · lowest wins</p>
+          <p style={{ margin: "0 0 4px" }}>✂️ Missed cut / WD: <strong style={{ color: theme.text }}>R1+R2 + worst R3 + worst R4 in field</strong></p>
+          <p style={{ margin: 0 }}>⏱ Picks can be <strong style={{ color: theme.text }}>updated right up to the first tee shot</strong> of each major</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -178,8 +188,13 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
         </header>
 
         <div style={{ maxWidth: 600, margin: "0 auto", padding: "20px" }}>
-          {/* Rules first */}
-          <Rules />
+          {/* Overall standings — front and centre */}
+          <div style={{ background: "#ffffff", border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 14, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: DEFAULT_THEME.accent, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>
+              Overall Standings
+            </h2>
+            <Leaderboard compact />
+          </div>
 
           {/* Tournament cards */}
           <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -188,13 +203,22 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
             ))}
           </div>
 
-          {/* Overall standings */}
-          <div style={{ marginTop: 24, background: DEFAULT_THEME.bgCard, border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 14, padding: 20 }}>
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: DEFAULT_THEME.accent, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>
-              Overall Standings
-            </h2>
-            <Leaderboard compact />
-          </div>
+          {/* Rules — collapsible */}
+          <Rules />
+
+          {/* Admin link */}
+          {user.isAdmin && (
+            <button
+              onClick={() => { setView("tournament"); setActiveTournament(null); setTournamentTab("admin"); }}
+              style={{
+                marginTop: 16, width: "100%", padding: "12px", background: "#ffffff",
+                border: `1px solid ${DEFAULT_THEME.border}`, borderRadius: 10,
+                color: DEFAULT_THEME.muted, fontSize: 13, cursor: "pointer", fontWeight: 600,
+              }}
+            >
+              Admin Panel
+            </button>
+          )}
         </div>
       </div>
     );
@@ -202,9 +226,10 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
 
   // ── Tournament view ──
   const tabs: { key: TournamentTab; label: string; show: boolean }[] = [
-    { key: "picks", label: "My Picks", show: true },
-    { key: "all-picks", label: "All Picks", show: true },
-    { key: "leaderboard", label: "Scores", show: true },
+    { key: "picks", label: "My Picks", show: !!activeTournament },
+    { key: "all-picks", label: "All Picks", show: !!activeTournament },
+    { key: "leaderboard", label: "Scores", show: !!activeTournament },
+    { key: "admin", label: "Admin", show: user.isAdmin },
   ];
 
   return (
@@ -252,6 +277,7 @@ export function Dashboard({ user, onLogout }: { user: User; onLogout: () => void
         {tournamentTab === "leaderboard" && activeTournament && (
           <Leaderboard tournamentId={activeTournament.id} theme={theme} />
         )}
+        {tournamentTab === "admin" && user.isAdmin && <Admin />}
       </main>
     </div>
   );

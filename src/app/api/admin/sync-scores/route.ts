@@ -61,6 +61,11 @@ export async function POST() {
         });
         synced++;
       }
+      // Update lastSyncAt
+      await prisma.tournament.update({
+        where: { id: tournament.id },
+        data: { lastSyncAt: new Date() },
+      });
     } catch (err) {
       console.error(`Failed to sync ${tournament.name}:`, err);
     }
