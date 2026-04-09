@@ -26,9 +26,25 @@ export async function POST() {
       const { scores } = await fetchTournamentScores(tournament.espnId);
 
       for (const score of scores) {
-        const golfer = await prisma.golfer.findUnique({
+        // Find by ESPN ID first
+        let golfer = await prisma.golfer.findUnique({
           where: { espnId: score.espnId },
         });
+
+        // If not found, try matching by name (links pending picks to ESPN data)
+        if (!golfer) {
+          const byName = await prisma.golfer.findFirst({
+            where: { name: score.name },
+          });
+          if (byName && byName.espnId.startsWith("pending-")) {
+            // Update the pending golfer with the real ESPN ID
+            golfer = await prisma.golfer.update({
+              where: { id: byName.id },
+              data: { espnId: score.espnId },
+            });
+          }
+        }
+
         if (!golfer) continue;
 
         await prisma.golferScore.upsert({

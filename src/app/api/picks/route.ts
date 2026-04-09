@@ -6,35 +6,6 @@ function normalize(s: string): string {
   return s.toLowerCase().trim().replace(/[^a-z ]/g, "");
 }
 
-function fuzzyMatch(input: string, candidates: { id: string; name: string; region: string }[]): { id: string; name: string; region: string } | null {
-  const norm = normalize(input);
-  if (!norm) return null;
-
-  // Exact match first
-  const exact = candidates.find((c) => normalize(c.name) === norm);
-  if (exact) return exact;
-
-  // Substring match (input is part of name, or name is part of input)
-  const substring = candidates.find((c) => {
-    const cn = normalize(c.name);
-    return cn.includes(norm) || norm.includes(cn);
-  });
-  if (substring) return substring;
-
-  // Last name match
-  const inputParts = norm.split(" ");
-  const inputLast = inputParts[inputParts.length - 1];
-  if (inputLast.length >= 3) {
-    const lastNameMatches = candidates.filter((c) => {
-      const parts = normalize(c.name).split(" ");
-      return parts[parts.length - 1] === inputLast;
-    });
-    if (lastNameMatches.length === 1) return lastNameMatches[0];
-  }
-
-  return null;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const competitorId = await getSession();
@@ -62,12 +33,9 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Must fill all 4 slots" }, { status: 400 });
     }
 
-    // Get all synced golfers (real ESPN IDs only)
-    const allGolfers = await prisma.golfer.findMany({
-      where: { NOT: { espnId: { startsWith: "manual-" } } },
-    });
+    // Get all golfers in DB for matching
+    const allGolfers = await prisma.golfer.findMany();
 
-    // Match each pick to a real golfer
     const golferIds: string[] = [];
     const golferNames: string[] = [];
 
@@ -76,35 +44,35 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: "All 4 golfer names are required" }, { status: 400 });
       }
 
+      const name = pick.golferName.trim();
+      const norm = normalize(name);
       const region = pick.slot.startsWith("eu") ? "EU" : pick.slot === "us" ? "US" : "ROW";
 
-      // Try matching within the correct region first
-      const regionGolfers = allGolfers.filter((g) => g.region === region);
-      let match = fuzzyMatch(pick.golferName, regionGolfers);
+      // Try to find existing golfer by name
+      let golfer = allGolfers.find((g) => normalize(g.name) === norm);
 
-      // If no match in region, try all golfers and suggest the right slot
-      if (!match) {
-        const anyMatch = fuzzyMatch(pick.golferName, allGolfers);
-        if (anyMatch) {
-          return Response.json({
-            error: `${anyMatch.name} is categorised as ${anyMatch.region}, not ${region}. Move them to the right slot.`,
-          }, { status: 400 });
-        }
-        return Response.json({
-          error: `No golfer matching "${pick.golferName}" found. Check the spelling.`,
-        }, { status: 400 });
+      // If not found, create one — anyone can be picked
+      if (!golfer) {
+        golfer = await prisma.golfer.create({
+          data: {
+            name,
+            espnId: `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            region,
+          },
+        });
+        allGolfers.push(golfer);
       }
 
-      golferIds.push(match.id);
-      golferNames.push(match.name);
+      golferIds.push(golfer.id);
+      golferNames.push(golfer.name);
     }
 
-    // Check no duplicate golfers within this pick set
+    // No picking the same golfer twice in one major
     if (new Set(golferIds).size !== golferIds.length) {
       return Response.json({ error: "Cannot pick the same golfer twice" }, { status: 400 });
     }
 
-    // Check no golfer reuse across other majors
+    // No reusing a golfer across majors
     const existingPicks = await prisma.pick.findMany({
       where: { competitorId, tournamentId: { not: tournamentId } },
       include: { golfer: true, tournament: true },
@@ -118,7 +86,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Upsert picks
+    // Save picks
     await prisma.$transaction([
       prisma.pick.deleteMany({ where: { competitorId, tournamentId } }),
       ...picks.map((pick: { slot: string }, i: number) =>
