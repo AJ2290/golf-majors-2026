@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getSession, clearSession } from "@/lib/session";
 
 export async function GET() {
   const competitorId = await getSession();
@@ -7,10 +7,20 @@ export async function GET() {
     return Response.json({ user: null });
   }
 
-  const competitor = await prisma.competitor.findUnique({
-    where: { id: competitorId },
-    select: { id: true, name: true, isAdmin: true },
-  });
+  try {
+    const competitor = await prisma.competitor.findUnique({
+      where: { id: competitorId },
+      select: { id: true, name: true, isAdmin: true },
+    });
 
-  return Response.json({ user: competitor });
+    if (!competitor) {
+      await clearSession();
+      return Response.json({ user: null });
+    }
+
+    return Response.json({ user: competitor });
+  } catch {
+    await clearSession();
+    return Response.json({ user: null });
+  }
 }
