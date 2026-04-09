@@ -49,17 +49,6 @@ function CompactLeaderboard() {
 
   if (loading) return <div style={{ color: theme.dim, fontSize: 13 }}>Loading...</div>;
 
-  const hasScores = leaderboard.some((e) => e.totalScore !== 0 || Object.keys(e.majors).length > 0);
-
-  if (!hasScores) {
-    return (
-      <div style={{ textAlign: "center", padding: "16px 0" }}>
-        <div style={{ color: theme.muted, fontSize: 13 }}>No scores yet</div>
-        <div style={{ color: theme.dim, fontSize: 11, marginTop: 4 }}>Standings update when the first major begins</div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {leaderboard.map((entry, i) => (

@@ -10,6 +10,7 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: "Golf Majors Sweepstake 2026",
   description: "Pick your golfers, track the scores, win the pot",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({
